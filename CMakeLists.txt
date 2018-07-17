@@ -7,6 +7,8 @@ find_package(catkin REQUIRED COMPONENTS
   rosconsole
   roscpp
   sensor_msgs
+  visualization_msgs
+  geometry_msgs
 )
 
 #add_subdirectory(sdk)
@@ -26,9 +28,10 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/src
   ${PROJECT_SOURCE_DIR}/sdk/include
   ${PROJECT_SOURCE_DIR}/sdk/src
+  ${PROJECT_SOURCE_DIR}/sdk/matrix
 )
 
-add_executable(ydlidar_node src/ydlidar_node.cpp  ${SDK_SRC})
+add_executable(ydlidar_node src/ydlidar_node.cpp ${SDK_SRC})
 add_executable(ydlidar_client src/ydlidar_client.cpp)
 
 target_link_libraries(ydlidar_node

@@ -11,7 +11,6 @@
 #include "serial.h"
 #include "common.h"
 
-
 namespace serial {
 
 	using std::min;
