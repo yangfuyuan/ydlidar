@@ -41,7 +41,7 @@ int main(int argc, char * argv[]) {
     int baudrate=115200;
     std::string frame_id;
     bool angle_fixed, intensities,low_exposure,reversion, resolution_fixed,heartbeat;
-    bool auto_reconnect, debug;
+    bool auto_reconnect, debug, sync_imu;
     double angle_max,angle_min;
     int samp_rate;
     std::string list;
@@ -51,6 +51,7 @@ int main(int argc, char * argv[]) {
 
     ros::NodeHandle nh;
     ros::Publisher scan_pub = nh.advertise<sensor_msgs::LaserScan>("scan", 1000);
+    ros::Publisher sync_scan_pub = nh.advertise<sensor_msgs::LaserScan>("sync_scan", 1000);
 	ros::Publisher marker_publisher_ = nh.advertise<visualization_msgs::Marker>("publish_line_markers", 1);
 
     ros::NodeHandle nh_private("~");
@@ -141,33 +142,48 @@ int main(int argc, char * argv[]) {
         if(laser.doProcessSimple(scan, syncscan, pc, lines, hardError )){
 
             sensor_msgs::LaserScan scan_msg;
+            sensor_msgs::LaserScan sync_scan_msg;
 
             ros::Time start_scan_time;
-            start_scan_time.sec = syncscan.system_time_stamp/1000000000ul;
-            start_scan_time.nsec = syncscan.system_time_stamp%1000000000ul;
+            
+            start_scan_time.sec = scan.system_time_stamp/1000000000ul;
+            start_scan_time.nsec = scan.system_time_stamp%1000000000ul;
             scan_msg.header.stamp = start_scan_time;
             scan_msg.header.frame_id = frame_id;
-            scan_msg.angle_min = syncscan.config.min_angle;
-            scan_msg.angle_max = syncscan.config.max_angle;
-            scan_msg.angle_increment = syncscan.config.ang_increment;
-            scan_msg.scan_time = syncscan.config.scan_time;
-            scan_msg.time_increment = syncscan.config.time_increment;
-            scan_msg.range_min = syncscan.config.min_range;
-            scan_msg.range_max = syncscan.config.max_range;
+            scan_msg.angle_min = scan.config.min_angle;
+            scan_msg.angle_max = scan.config.max_angle;
+            scan_msg.angle_increment = scan.config.ang_increment;
+            scan_msg.scan_time = scan.config.scan_time;
+            scan_msg.time_increment = scan.config.time_increment;
+            scan_msg.range_min = scan.config.min_range;
+            scan_msg.range_max = scan.config.max_range;
             
-            scan_msg.ranges = syncscan.ranges;
-            scan_msg.intensities =  syncscan.intensities;
-
+            scan_msg.ranges = scan.ranges;
+            scan_msg.intensities =  scan.intensities;
             scan_pub.publish(scan_msg);
+
+	    sync_scan_msg.header.stamp = start_scan_time;
+            sync_scan_msg.header.frame_id = frame_id;
+            sync_scan_msg.angle_min = syncscan.config.min_angle;
+            sync_scan_msg.angle_max = syncscan.config.max_angle;
+            sync_scan_msg.angle_increment = syncscan.config.ang_increment;
+            sync_scan_msg.scan_time = syncscan.config.scan_time;
+            sync_scan_msg.time_increment = syncscan.config.time_increment;
+            sync_scan_msg.range_min = syncscan.config.min_range;
+            sync_scan_msg.range_max = syncscan.config.max_range;
+            
+            sync_scan_msg.ranges = syncscan.ranges;
+            sync_scan_msg.intensities =  syncscan.intensities;
+	    sync_scan_pub.publish(sync_scan_msg);
             
 
             visualization_msgs::Marker marker_msg;
             marker_msg.ns = "laser_fit_lines";
 	        marker_msg.id = 0;
 	        marker_msg.type = visualization_msgs::Marker::LINE_LIST;
-	        marker_msg.scale.x = 0.1;
-	        marker_msg.color.r = 1.0;
-	        marker_msg.color.g = 0.0;
+	        marker_msg.scale.x = 0.03;
+	        marker_msg.color.r = 0.0;
+	        marker_msg.color.g = 1.0;
 	        marker_msg.color.b = 0.0;
 	        marker_msg.color.a = 1.0;
             for(std::vector<gline>::const_iterator it = lines.begin(); it != lines.end(); it++) {
