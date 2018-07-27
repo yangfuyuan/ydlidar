@@ -385,6 +385,12 @@ namespace ydlidar{
         bool setSaveParse(bool parse, const std::string& filename);
 
 
+        /**
+         * @brief setEnableCorrectionAngle 是否开启距离都角度的修正，当前版本只适用ｘ4-t系列
+         * @param enalbe
+         * @return
+         */
+        void setEnableCorrectionAngle(bool enable);
 
 		/**
 		* @brief 获取雷达设备健康状态 \n
@@ -853,6 +859,8 @@ namespace ydlidar{
         std::atomic<bool>     isAutoReconnect;  ///< 异常自动从新连接
         std::atomic<bool>     isAutoconnting;  ///< 是否正在自动连接中
         std::atomic<bool>     save_parsing;    ///< 是否保存解析命令到文件，调试调用
+        std::atomic<bool>     enable_correctionAngle;    ///< 是否启动角度纠正
+
 
 		enum {
 			DEFAULT_TIMEOUT = 2000,    /**< 默认超时时间. */ 
@@ -888,7 +896,6 @@ namespace ydlidar{
 		uint32_t _baudrate;					///< 波特率
 		bool isSupportMotorCtrl;			///< 是否支持电机控制
 		uint64_t m_ns;						///< 时间戳
-		uint64_t m_calc_ns;					///< 时间戳
 		uint32_t m_pointTime;				///< 激光点直接时间间隔
 		uint32_t trans_delay;				///< 串口传输一个byte时间
         uint16_t firmware_version;          ///< 雷达固件版本号

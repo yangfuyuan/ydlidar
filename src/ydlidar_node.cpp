@@ -48,6 +48,7 @@ int main(int argc, char * argv[]) {
     std::vector<float> ignore_array;  
     double max_range , min_range;
     double _frequency, sensor_x, sensor_y, sensor_yaw;
+    bool enable_pasing;
 
     ros::NodeHandle nh;
     ros::Publisher scan_pub = nh.advertise<sensor_msgs::LaserScan>("scan", 1000);
@@ -64,7 +65,7 @@ int main(int argc, char * argv[]) {
     nh_private.param<bool>("low_exposure", low_exposure, "false");
     nh_private.param<bool>("auto_reconnect", auto_reconnect, "true");
     nh_private.param<bool>("debug", debug, "false");
-    nh_private.param<bool>("reversion", reversion, "false");
+    nh_private.param<bool>("enable_pasing", enable_pasing, "false");
     nh_private.param<bool>("intensity", intensities, "false");
     nh_private.param<double>("angle_max", angle_max , 180);
     nh_private.param<double>("angle_min", angle_min , -180);
@@ -111,14 +112,13 @@ int main(int argc, char * argv[]) {
     laser.setMaxAngle(angle_max);
     laser.setMinAngle(angle_min);
     laser.setHeartBeat(heartbeat);
-    laser.setReversion(reversion);
     laser.setFixedResolution(resolution_fixed);
     laser.setAutoReconnect(auto_reconnect);
     laser.setEnableDebug(debug);
     laser.setExposure(low_exposure);
     laser.setScanFrequency(_frequency);
     laser.setSampleRate(samp_rate);
-    laser.setReversion(reversion);
+    laser.setEnablCorrectionAngle(enable_pasing);
     laser.setIgnoreArray(ignore_array);
 
     //雷达相对机器人安装位置
@@ -205,7 +205,7 @@ int main(int argc, char * argv[]) {
 
 		}
 
-        {//做imu和odometry数据输入
+        /*{//做imu和odometry数据输入
             odom_info odom;
             odom.x = 0;
             odom.y = 0;
@@ -214,7 +214,7 @@ int main(int argc, char * argv[]) {
             laser.setSyncOdometry(odom);
 
 
-        }
+        }*/
 
         rate.sleep();
         ros::spinOnce();

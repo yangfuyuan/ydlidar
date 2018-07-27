@@ -34,6 +34,7 @@ CYdLidar::CYdLidar()
     node_counts = 720;
     each_angle = 0.5;
     show_error = 0;
+    m_EnablCorrectionAngle = false;
     m_IgnoreArray.clear();
 
     sensor_matrix.setIdentity();
@@ -103,8 +104,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,LaserScan &syncscan, PointClo
     //  wait Scan data:
     uint64_t tim_scan_start = getTime();
 	result_t op_result =  YDlidarDriver::singleton()->grabScanData(nodes, count);
-    const uint64_t tim_scan_end = getTime();
-
     std::vector<double> bearings;
     std::vector<unsigned int> indices;
     RangeData  rangedata;
@@ -117,10 +116,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,LaserScan &syncscan, PointClo
 	{
 		op_result = YDlidarDriver::singleton()->ascendScanData(nodes, count);
 		//同步后的时间
-		if(nodes[0].stamp > 0){
-            tim_scan_start = nodes[0].stamp;
-        }
-		const double scan_time = tim_scan_end - tim_scan_start;
+        uint64_t max_time =nodes[0].stamp ;
+        uint64_t min_time = nodes[0].stamp;
 		if (op_result == RESULT_OK)
 		{
             if(!m_FixedResolution){
@@ -152,7 +149,17 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,LaserScan &syncscan, PointClo
                             angle_compensate_nodes[inter+1]=nodes[i];
                     }
                 }
+
+                if(nodes[i].stamp > max_time) {
+                    max_time = nodes[i].stamp;
+                }
+                if(nodes[i].stamp < min_time) {
+                    min_time = nodes[i].stamp;
+                }
              }
+
+            const double scan_time = max_time - min_time;
+
 
             LaserScan scan_msg;
             PointCloud pc;
@@ -176,7 +183,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,LaserScan &syncscan, PointClo
             int index = 0;
 
             scan_msg.system_time_stamp = tim_scan_start;
-            scan_msg.self_time_stamp = tim_scan_start;
+            scan_msg.self_time_stamp = min_time;
             scan_msg.config.min_angle = DEG2RAD(m_MinAngle);
             scan_msg.config.max_angle = DEG2RAD(m_MaxAngle);
             scan_msg.config.ang_increment = (scan_msg.config.max_angle - scan_msg.config.min_angle) / (double)counts;
@@ -674,70 +681,8 @@ bool CYdLidar::checkStatus()
     if (YDlidarDriver::singleton()->isscanning())
         return true;
 
-    std::map<int, bool> checkmodel;
-    checkmodel.insert(std::map<int, bool>::value_type(115200, false));
-    checkmodel.insert(std::map<int, bool>::value_type(128000, false));
-    checkmodel.insert(std::map<int, bool>::value_type(153600, false));
-    checkmodel.insert(std::map<int, bool>::value_type(230400, false));
-
-    again:
-    // check health:
-    bool ret = getDeviceHealth();
-
-    int m_type;
-    bool check_error = false;
-    if (!ret || !getDeviceInfo(m_type)){
-        check_error = true;
-        checkmodel[m_SerialBaudrate] = true;
-        map<int,bool>::iterator it;
-        for (it=checkmodel.begin(); it!=checkmodel.end(); ++it) {
-            if(it->second)
-                continue;
-
-            show_error++;
-            YDlidarDriver::singleton()->disconnect();
-            YDlidarDriver::done();
-            YDlidarDriver::initDriver();
-            if (!YDlidarDriver::singleton()) {
-                printf("YDLIDAR Create Driver fail, exit\n");
-                return false;
-            }
-            m_SerialBaudrate = it->first;
-
-            bool ret = checkCOMMs();
-            if (!ret) {
-                return false;
-            }
-            goto again;
-        }
-
-        return false;
-    }
-
-    show_error = 0;
-    if(m_type != 4 || check_error)
-        m_Intensities = false;
-    if (m_type == 4) {
-        if (m_SerialBaudrate == 153600)
-            m_Intensities = true;
-        if (m_Intensities) {
-            scan_exposure exposure;
-            int cnt = 0;
-            while ((YDlidarDriver::singleton()->setLowExposure(exposure) == RESULT_OK) && (cnt<3)) {
-                if (exposure.exposure != m_Exposure) {
-                        printf("set EXPOSURE MODEL SUCCESS!!!\n");
-                        break;
-                }
-                cnt++;
-            }
-            if (cnt>=3) {
-
-                fprintf(stderr,"set LOW EXPOSURE MODEL FALIED!!!\n");
-            }
-        }
-    }
-
     YDlidarDriver::singleton()->setIntensities(m_Intensities);
+    YDlidarDriver::singleton()->setEnableCorrectionAngle(m_EnablCorrectionAngle);
 
      // start scan...
     result_t s_result= YDlidarDriver::singleton()->startScan();
