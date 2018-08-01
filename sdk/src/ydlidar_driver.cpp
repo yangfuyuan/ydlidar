@@ -6,6 +6,7 @@
 *  http://www.eaibot.com
 * 
 */
+#pragma warning (disable:4996);
 #include "common.h"
 #include "ydlidar_driver.h"
 #include <math.h>
@@ -473,7 +474,6 @@ namespace ydlidar{
 		uint8_t* recvBuffer = new uint8_t[size];
 
 		uint32_t waitTime = 0;
-		uint64_t ns =  getTime();
 		uint8_t *packageBuffer = (m_intensities)?(uint8_t*)&package.package_Head:(uint8_t*)&packages.package_Head;
 		uint8_t  package_Sample_Num = 0;
 		int32_t AngleCorrectForDistance = 0;
@@ -496,9 +496,6 @@ namespace ydlidar{
 				if (recvSize > remainSize){
 					recvSize = remainSize;
 				}
-
-				ns = getTime();
-
 
 				getData(recvBuffer, recvSize);
 
@@ -754,26 +751,18 @@ namespace ydlidar{
 		}
 
         if((*node).sync_flag&LIDAR_RESP_MEASUREMENT_SYNCBIT){
-			m_ns = ns;
-			m_calc_ns = m_ns - nowPackageNum*trans_delay - (nowPackageNum -1)*m_pointTime;
+            m_ns = getTime() - (nowPackageNum*3 +10)*trans_delay - (nowPackageNum -1)*m_pointTime;
             if (NULL != fd&& save_parsing){
                 fprintf(fd, "new scan data: (%d, %d)\n", nowPackageNum, package_Sample_Index);
             }
 		}
+        (*node).stamp = m_ns  + package_Sample_Index*m_pointTime;
 
-		if(package_Sample_Index ==0){
-			m_ns = ns;
-		}
-
-		(*node).stamp = m_ns - nowPackageNum*trans_delay - (nowPackageNum -1 - package_Sample_Index)*m_pointTime;
-		if((*node).stamp < m_calc_ns){
-			(*node).stamp = m_calc_ns;
-		}
-
+        if(package_Sample_Index %4 == 0)
         {
             ScopedLocker l(_odom_lock);
             if (!odom_queue.empty()) {
-                int min = 1000000000;
+                int min = 100000000;
                 for (std::list<odom_info>::const_iterator it = odom_queue.begin(); it != odom_queue.end(); ++it) {
                     int diff = (*node).stamp - (*it).stamp;
                     if (abs(diff) < min){
@@ -800,7 +789,7 @@ namespace ydlidar{
 
 		if(package_Sample_Index >= nowPackageNum){
 			package_Sample_Index = 0;
-			m_calc_ns = (*node).stamp;
+            m_ns= (*node).stamp + m_pointTime;
 		}
 		delete[] recvBuffer;
 		return RESULT_OK;
