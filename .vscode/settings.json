@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "hash_map": "cpp",
+        "initializer_list": "cpp",
+        "array": "cpp",
+        "list": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "string_view": "cpp"
+    }
+}
