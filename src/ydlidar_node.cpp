@@ -38,8 +38,10 @@ int main(int argc, char * argv[]) {
     int baudrate=115200;
     std::string frame_id;
     bool angle_fixed,reversion, resolution_fixed;
-    bool auto_reconnect;
+    bool auto_reconnect, check_lidar_arc;
     double angle_max,angle_min;
+    double check_angle_max,check_angle_min;
+    double check_threshold;
     result_t op_result;
     std::string list;
     std::vector<float> ignore_array;  
@@ -55,8 +57,12 @@ int main(int argc, char * argv[]) {
     nh_private.param<bool>("resolution_fixed", resolution_fixed, "true");
     nh_private.param<bool>("auto_reconnect", auto_reconnect, "true");
     nh_private.param<bool>("reversion", reversion, "false");
+    nh_private.param<bool>("check_lidar_arc", check_lidar_arc, "false");
     nh_private.param<double>("angle_max", angle_max , 180);
     nh_private.param<double>("angle_min", angle_min , -180);
+    nh_private.param<double>("check_angle_max", check_angle_max , 30);
+    nh_private.param<double>("check_angle_min", check_angle_min , -30);
+    nh_private.param<double>("check_threshold", check_threshold , 4);
     nh_private.param<double>("range_max", max_range , 16.0);
     nh_private.param<double>("range_min", min_range , 0.08);
     nh_private.param<std::string>("ignore_array",list,"");
@@ -90,6 +96,10 @@ int main(int argc, char * argv[]) {
     laser.setFixedResolution(resolution_fixed);
     laser.setAutoReconnect(auto_reconnect);
     laser.setReversion(reversion);
+    laser.setCheckLidarArc(check_lidar_arc);
+    laser.setArcDetectMinAngle(check_angle_min);
+    laser.setArcDetectMaxAngle(check_angle_max);
+    laser.setThreshold(check_threshold);
     laser.setIgnoreArray(ignore_array);
     laser.initialize();
 
@@ -116,6 +126,14 @@ int main(int argc, char * argv[]) {
             scan_msg.ranges = scan.ranges;
             scan_msg.intensities =  scan.intensities;
             scan_pub.publish(scan_msg);
+
+            if(laser.getCheckLidarArc()) {
+                if(laser.getCheckOut()) {
+                    ROS_INFO("SUCCESS");
+                }else {
+                    ROS_ERROR("FAILED");
+                }
+            }
         }  
         rate.sleep();
         ros::spinOnce();
