@@ -39,7 +39,7 @@ port (string, default: /dev/ydlidar)
 
     serial port name used in your system.
 
-baudrate (int, default: 230400)
+baudrate (int, default: 153600)
 
     serial port baud rate.
 
@@ -63,15 +63,11 @@ reversion (bool, default: false)
 
     indicated whether to turn off solar noise
     
-glass_noise (bool, default: true)
+glass_noise (bool, default: false)
 
     indicated whether to turn off glass noise.
 
-calibration_filename (string, default: LidarAngleCalibration.ini)
-
-        Lidar zero angle calibration file.
-
-resolution_fixed (bool, default: true)
+resolution_fixed (bool, default: false)
 
     indicated whether the LIDAR has a fixed angular resolution.
 
@@ -95,7 +91,7 @@ ignore_array (string, default: "")
 
     Set the current angle range value to zero.
 
-samp_rate (int, default: 5)
+samp_rate (int, default: 4)
 
     the LIDAR sampling frequency.
 

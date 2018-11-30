@@ -54,17 +54,16 @@ int main(int argc, char * argv[]) {
     ros::Publisher scan_pub = nh.advertise<sensor_msgs::LaserScan>("scan", 1000);
     ros::NodeHandle nh_private("~");
     nh_private.param<std::string>("port", port, "/dev/ydlidar"); 
-    nh_private.param<int>("baudrate", baudrate, 230400); 
+    nh_private.param<int>("baudrate", baudrate, 153600); 
     nh_private.param<std::string>("frame_id", frame_id, "laser_frame");
     nh_private.param<bool>("angle_fixed", angle_fixed, "true");
     nh_private.param<bool>("resolution_fixed", resolution_fixed, "true");
     nh_private.param<bool>("heartbeat", heartbeat, "false");
-    nh_private.param<bool>("intensity", intensities, "false");
+    nh_private.param<bool>("intensity", intensities, "true");
     nh_private.param<bool>("low_exposure", low_exposure, "false");
     nh_private.param<bool>("auto_reconnect", auto_reconnect, "true");
-    nh_private.param<bool>("sun_noise", sun_noise, "true");
-    nh_private.param<bool>("glass_noise", glass_noise, "true");
-    nh_private.param<std::string>("calibration_filename", calibration_filename, "LidarAngleCalibration.ini");
+    nh_private.param<bool>("sun_noise", sun_noise, "false");
+    nh_private.param<bool>("glass_noise", glass_noise, "false");
     nh_private.param<bool>("reversion", reversion, "false");
     nh_private.param<double>("angle_max", angle_max , 180);
     nh_private.param<double>("angle_min", angle_min , -180);
@@ -116,7 +115,6 @@ int main(int argc, char * argv[]) {
     laser.setScanFrequency(_frequency);
     laser.setSampleRate(samp_rate);
     laser.setIgnoreArray(ignore_array);
-    laser.setCalibrationFileName(calibration_filename);//Zero angle offset filename
     laser.initialize();
     ros::Rate rate(30);
 
